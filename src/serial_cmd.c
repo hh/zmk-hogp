@@ -33,6 +33,7 @@
 #include <zmk/events/ble_active_profile_changed.h>
 #include <zmk/ble.h>
 #include <zmk/endpoints.h>
+#include <zmk/endpoints_types.h>
 
 #if IS_ENABLED(CONFIG_ZMK_HOGP)
 #include <zmk/hogp/hogp.h>
@@ -86,11 +87,11 @@ static void process_command(const char *cmd) {
 
     } else if (strncmp(cmd, "ble", 3) == 0) {
         LOG_INF("Switching to BLE output...");
-        zmk_endpoints_select(ZMK_ENDPOINT_BLE);
+        zmk_endpoints_select_transport(ZMK_TRANSPORT_BLE);
 
     } else if (strncmp(cmd, "usb", 3) == 0) {
         LOG_INF("Switching to USB output...");
-        zmk_endpoints_select(ZMK_ENDPOINT_USB);
+        zmk_endpoints_select_transport(ZMK_TRANSPORT_USB);
 
     } else if (strncmp(cmd, "forget", 6) == 0) {
         /* Clear BLE profile bonds (but NOT split connection) */
