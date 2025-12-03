@@ -1,0 +1,61 @@
+# Copyright (c) 2024 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+menuconfig ZMK_HOGP
+    bool "BLE HID Central (HOGP) for external pointing devices"
+    depends on BT_CENTRAL
+    select BT_GATT_CLIENT
+    select BT_GATT_AUTO_DISCOVER_CCC
+    help
+      Enable HOGP (HID over GATT Profile) central role to connect
+      to external BLE HID devices like mice and trackpads, and
+      forward their input through the keyboard's active output.
+
+      Note: You may need to set CONFIG_BT_SMP_SC_PAIR_ONLY=n in your
+      prj.conf if connecting to devices that use Legacy Pairing.
+
+if ZMK_HOGP
+
+config ZMK_HOGP_MAX_DEVICES
+    int "Maximum simultaneous HOGP devices"
+    default 1
+    range 1 2
+    help
+      Maximum number of BLE HID peripherals that can be connected
+      simultaneously. Each device uses a BT connection slot.
+
+config ZMK_HOGP_AUTO_RECONNECT
+    bool "Auto-reconnect to bonded HOGP devices on boot"
+    default y
+    help
+      Automatically scan for and reconnect to previously bonded
+      HOGP devices when the keyboard starts up.
+
+config ZMK_HOGP_SCAN_DURATION_SEC
+    int "Scan duration in seconds (0 = indefinite)"
+    default 30
+    help
+      How long to scan for devices before stopping.
+      Set to 0 for indefinite scanning.
+
+module = ZMK_HOGP
+module-str = zmk_hogp
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # ZMK_HOGP
+
+menuconfig ZMK_SERIAL_CMD
+    bool "Serial command handler for USB logging console"
+    depends on ZMK_USB_LOGGING
+    default y if ZMK_HOGP
+    help
+      Enable serial commands over the USB CDC ACM console.
+      Commands start with '!' prefix (e.g., !help, !pair, !reboot).
+
+if ZMK_SERIAL_CMD
+
+module = ZMK_SERIAL_CMD
+module-str = zmk_serial_cmd
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # ZMK_SERIAL_CMD
