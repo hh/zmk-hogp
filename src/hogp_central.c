@@ -295,13 +295,6 @@ static void hogp_scan_recv(const struct bt_le_scan_recv_info *info,
         return;
     }
 
-    char addr_str[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
-
-    /* Log ALL devices during pairing for debugging */
-    LOG_INF("SCAN: %s RSSI:%d %s", addr_str, info->rssi,
-            info->addr->type == BT_ADDR_LE_PUBLIC ? "PUB" : "rnd");
-
     /* Skip weak signals - device should be close for pairing */
     if (info->rssi < HOGP_MIN_RSSI_PAIRING) {
         return;
@@ -321,26 +314,21 @@ static void hogp_scan_recv(const struct bt_le_scan_recv_info *info,
     /* Parse advertisement data */
     bt_data_parse(buf, hogp_ad_parse_cb, &ctx);
 
-    /* Log device name if found */
-    if (ctx.name[0] && info->rssi >= -80) {
-        LOG_INF("  -> Name: '%s' HID:%d Apple:%d", ctx.name, ctx.found_hid, ctx.is_apple_mfr);
-    }
-
-    /* Only connect to devices that advertise HID Service UUID (0x1812) */
-    bool should_connect = false;
+    /* Only log devices that are interesting: HID devices or named devices */
+    char addr_str[BT_ADDR_LE_STR_LEN];
     bool is_public = hogp_is_public_addr(info->addr);
-
-    /* Log devices with names for debugging */
-    if (ctx.name[0]) {
-        LOG_INF("Device: %s '%s' (RSSI %d, %s, HID:%d)",
-                addr_str, ctx.name, info->rssi,
-                is_public ? "pub" : "rnd", ctx.found_hid);
-    }
+    bool should_connect = false;
 
     if (ctx.found_hid) {
-        LOG_INF("*** HID device found: %s '%s' (RSSI %d) ***", addr_str,
+        bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
+        LOG_INF("*** HID DEVICE: %s '%s' (RSSI %d) ***", addr_str,
                 ctx.name[0] ? ctx.name : "unnamed", info->rssi);
         should_connect = true;
+    } else if (ctx.name[0]) {
+        /* Only log named non-HID devices at debug level */
+        bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
+        LOG_DBG("Device: %s '%s' (RSSI %d, %s)", addr_str, ctx.name, info->rssi,
+                is_public ? "pub" : "rnd");
     }
 
     if (!should_connect) {
