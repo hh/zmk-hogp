@@ -188,7 +188,7 @@ static int serial_cmd_event_listener(const zmk_event_t *eh) {
         struct zmk_ble_active_profile_changed *ev = as_zmk_ble_active_profile_changed(eh);
         /* Use printk for guaranteed output (not filtered by log level) */
         printk("BT:%d\n", ev->index);
-        LOG_INF("BT profile changed to %d (connected=%d)", ev->index, ev->connected);
+        LOG_INF("BT profile changed to %d", ev->index);
     }
     return ZMK_EV_EVENT_BUBBLE;
 }
