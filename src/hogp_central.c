@@ -314,21 +314,19 @@ static void hogp_scan_recv(const struct bt_le_scan_recv_info *info,
     /* Parse advertisement data */
     bt_data_parse(buf, hogp_ad_parse_cb, &ctx);
 
-    /* Only log devices that are interesting: HID devices or named devices */
+    /* Log all named devices so we can see what's being discovered */
     char addr_str[BT_ADDR_LE_STR_LEN];
-    bool is_public = hogp_is_public_addr(info->addr);
     bool should_connect = false;
 
     if (ctx.found_hid) {
         bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
-        LOG_INF("*** HID DEVICE: %s '%s' (RSSI %d) ***", addr_str,
+        LOG_INF("*** HID: %s '%s' RSSI:%d ***", addr_str,
                 ctx.name[0] ? ctx.name : "unnamed", info->rssi);
         should_connect = true;
     } else if (ctx.name[0]) {
-        /* Only log named non-HID devices at debug level */
+        /* Log named devices so we can see if ProtoArc appears without HID flag */
         bt_addr_le_to_str(info->addr, addr_str, sizeof(addr_str));
-        LOG_DBG("Device: %s '%s' (RSSI %d, %s)", addr_str, ctx.name, info->rssi,
-                is_public ? "pub" : "rnd");
+        LOG_INF("Device: '%s' %s RSSI:%d", ctx.name, addr_str, info->rssi);
     }
 
     if (!should_connect) {
