@@ -38,6 +38,23 @@ config ZMK_HOGP_SCAN_DURATION_SEC
       How long to scan for devices before stopping.
       Set to 0 for indefinite scanning.
 
+config ZMK_HOGP_MOUSE_OUTPUT
+    bool "Forward trackpad as mouse movement"
+    default y
+    depends on ZMK_POINTING
+    help
+      Convert single-finger trackpad touches to relative mouse movement.
+      This provides basic cursor control without multitouch gestures.
+
+config ZMK_HOGP_MOUSE_SENSITIVITY
+    int "Mouse sensitivity divisor"
+    default 4
+    depends on ZMK_HOGP_MOUSE_OUTPUT
+    help
+      Divide trackpad coordinates by this value when converting to mouse delta.
+      Higher values = slower cursor movement.
+      Typical values: 2 (fast), 4 (medium), 8 (slow)
+
 module = ZMK_HOGP
 module-str = zmk_hogp
 source "subsys/logging/Kconfig.template.log_config"
