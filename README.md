@@ -84,6 +84,7 @@ Commands must be prefixed with `!`:
 | `!clear` | Clear HOGP device bonds |
 | `!forget` | Clear all BLE bonds |
 | `!boot` | Enter UF2 bootloader |
+| `!bootright` | Central only: invoke bootloader on the peripheral over the split link |
 | `!reboot` | Soft reset keyboard |
 | `!ble` | Switch to BLE output |
 | `!usb` | Switch to USB output |

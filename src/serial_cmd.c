@@ -35,6 +35,11 @@
 #include <zmk/endpoints.h>
 #include <zmk/endpoints_types.h>
 
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#include <zmk/behavior.h>
+#include <zmk/split/bluetooth/central.h>
+#endif
+
 #if IS_ENABLED(CONFIG_ZMK_HOGP)
 #include <zmk/hogp/hogp.h>
 #endif
@@ -88,6 +93,23 @@ static void process_command(const char *cmd) {
         k_msleep(100);  /* Let log flush */
         sys_reboot(SYS_REBOOT_COLD);
 
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    /* Must be matched before "boot" — that prefix test would swallow it. */
+    } else if (strncmp(cmd, "bootright", 9) == 0 || strncmp(cmd, "bootperiph", 10) == 0) {
+        LOG_INF("Invoking bootloader on the peripheral over the split link...");
+        struct zmk_behavior_binding binding = {.behavior_dev = "bootloader"};
+        struct zmk_behavior_binding_event event = {
+            .position = 0,
+            .timestamp = k_uptime_get(),
+        };
+        int err = zmk_split_bt_invoke_behavior(0, &binding, event, true);
+        if (err) {
+            LOG_ERR("Failed to reach peripheral (err %d) — is the right half awake?", err);
+        } else {
+            LOG_INF("Peripheral should now present its UF2 drive over USB.");
+        }
+#endif /* CONFIG_ZMK_SPLIT_ROLE_CENTRAL */
+
     } else if (strncmp(cmd, "boot", 4) == 0 || strncmp(cmd, "flash", 5) == 0 ||
                strncmp(cmd, "dfu", 3) == 0) {
         LOG_INF("Entering bootloader mode...");
@@ -129,6 +151,9 @@ static void process_command(const char *cmd) {
 
     } else if (strncmp(cmd, "help", 4) == 0) {
         LOG_INF("Commands: !reboot, !boot"
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+                ", !bootright"
+#endif
 #if SERIAL_CMD_CENTRAL
                 ", !ble, !usb, !forget"
 #endif
