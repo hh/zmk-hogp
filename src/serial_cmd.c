@@ -41,6 +41,15 @@
 
 LOG_MODULE_REGISTER(serial_cmd, CONFIG_ZMK_SERIAL_CMD_LOG_LEVEL);
 
+/* Split peripherals have no endpoints or BLE profiles, so transport and
+ * bond commands only exist on the central (or a non-split keyboard).
+ * Peripherals keep the reduced set: !reboot, !boot, !help. */
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#define SERIAL_CMD_CENTRAL 1
+#else
+#define SERIAL_CMD_CENTRAL 0
+#endif
+
 #if DT_HAS_CHOSEN(zephyr_console)
 
 #define SERIAL_CMD_MAX_LEN 32
@@ -85,6 +94,7 @@ static void process_command(const char *cmd) {
         k_msleep(100);  /* Let log flush */
         sys_reboot(RST_UF2);
 
+#if SERIAL_CMD_CENTRAL
     } else if (strncmp(cmd, "ble", 3) == 0) {
         LOG_INF("Switching to BLE output...");
         zmk_endpoints_select_transport(ZMK_TRANSPORT_BLE);
@@ -98,6 +108,7 @@ static void process_command(const char *cmd) {
         LOG_INF("Clearing all BLE profile bonds...");
         zmk_ble_clear_all_bonds();
         LOG_INF("Bonds cleared. Re-pair with host to reconnect.");
+#endif /* SERIAL_CMD_CENTRAL */
 
 #if IS_ENABLED(CONFIG_ZMK_HOGP)
     } else if (strncmp(cmd, "pair", 4) == 0) {
@@ -117,7 +128,10 @@ static void process_command(const char *cmd) {
 #endif /* CONFIG_ZMK_HOGP */
 
     } else if (strncmp(cmd, "help", 4) == 0) {
-        LOG_INF("Commands: !reboot, !boot, !ble, !usb, !forget"
+        LOG_INF("Commands: !reboot, !boot"
+#if SERIAL_CMD_CENTRAL
+                ", !ble, !usb, !forget"
+#endif
 #if IS_ENABLED(CONFIG_ZMK_HOGP)
                 ", !pair, !unpair, !hogp, !clear"
 #endif
@@ -178,6 +192,7 @@ K_THREAD_DEFINE(serial_cmd_tid, SERIAL_CMD_STACK_SIZE,
                 serial_cmd_thread, NULL, NULL, NULL,
                 SERIAL_CMD_PRIORITY, 0, 1000);  /* Start after 1 second */
 
+#if SERIAL_CMD_CENTRAL
 /*
  * BLE Profile Change Listener
  * Broadcasts profile changes to serial for external bridge sync.
@@ -195,5 +210,6 @@ static int serial_cmd_event_listener(const zmk_event_t *eh) {
 
 ZMK_LISTENER(serial_cmd, serial_cmd_event_listener);
 ZMK_SUBSCRIPTION(serial_cmd, zmk_ble_active_profile_changed);
+#endif /* SERIAL_CMD_CENTRAL */
 
 #endif /* DT_HAS_CHOSEN(zephyr_console) */
