@@ -55,6 +55,24 @@ config ZMK_HOGP_MOUSE_SENSITIVITY
       Higher values = slower cursor movement.
       Typical values: 2 (fast), 4 (medium), 8 (slow)
 
+config ZMK_HOGP_TRACKPAD_OUTPUT
+    bool "Forward as ADG multitouch trackpad (ProtoArc)"
+    default n
+    help
+      Present as Apple ADG Chapter 15 compliant trackpad.
+      Full multitouch gesture support on Linux/iPadOS/macOS.
+      Adds trackpad report to the HID report descriptor.
+      Use this for ProtoArc and similar Windows PTP trackpads.
+
+config ZMK_HOGP_ITRACK_OUTPUT
+    bool "Forward as ADG multitouch trackpad (Brydge iTrack)"
+    default n
+    help
+      Support for Brydge iTrack trackpad with confidence bit fix.
+      The iTrack has a firmware bug where it reports confidence=0
+      when fingers are close together, breaking pinch gestures.
+      This option applies the fix and forwards as ADG multitouch.
+
 module = ZMK_HOGP
 module-str = zmk_hogp
 source "subsys/logging/Kconfig.template.log_config"
